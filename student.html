@@ -9,7 +9,6 @@
 <div class="container mt-4">
     <h2 class="text-center mb-4">Smart Student Record System</h2>
 
-    <!-- Dashboard -->
     <div class="row mb-4">
         <div class="col">
             <div class="card text-center">
@@ -29,17 +28,25 @@
         </div>
     </div>
 
-    <!-- Form -->
     <div class="card p-3 mb-4">
         <div class="row">
-            <div class="col"><input type="text" id="name" class="form-control" placeholder="Student Name"></div>
-            <div class="col"><input type="number" id="gpa" class="form-control" placeholder="GPA (0-10)"></div>
-            <div class="col"><input type="number" id="attendance" class="form-control" placeholder="Attendance %"></div>
-            <div class="col"><button onclick="addStudent()" class="btn btn-primary w-100">Add Student</button></div>
+            <div class="col">
+                <input type="text" id="name" class="form-control" placeholder="Student Name">
+            </div>
+            <div class="col">
+                <input type="number" id="gpa" class="form-control" placeholder="GPA (0-10)">
+            </div>
+            <div class="col">
+                <input type="number" id="attendance" class="form-control" placeholder="Attendance %">
+            </div>
+            <div class="col">
+                <button onclick="addStudent()" class="btn btn-primary w-100">
+                    Add Student
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Table -->
     <table class="table table-bordered table-striped">
         <thead class="table-dark">
             <tr>
@@ -58,10 +65,21 @@
 
 let students = JSON.parse(localStorage.getItem("students")) || [];
 
+function validateInput(name, gpa, attendance) {
+    if (!name.trim()) return "Name required";
+    if (isNaN(gpa) || gpa < 0 || gpa > 10) return "GPA must be 0-10";
+    if (isNaN(attendance) || attendance < 0 || attendance > 100) return "Attendance must be 0-100";
+    return null;
+}
+
 function calculateRisk(gpa, attendance) {
     if (gpa < 6 || attendance < 65) return "High Risk";
     if (gpa < 7) return "Moderate";
     return "Safe";
+}
+
+function saveData() {
+    localStorage.setItem("students", JSON.stringify(students));
 }
 
 function addStudent() {
@@ -69,14 +87,18 @@ function addStudent() {
     let gpa = parseFloat(document.getElementById("gpa").value);
     let attendance = parseInt(document.getElementById("attendance").value);
 
-    if (!name || !gpa || !attendance) return alert("Fill all fields");
+    let error = validateInput(name, gpa, attendance);
+    if (error) {
+        alert(error);
+        return;
+    }
 
     let risk = calculateRisk(gpa, attendance);
 
     students.push({ name, gpa, attendance, risk });
-    localStorage.setItem("students", JSON.stringify(students));
+    saveData();
+    renderTable();
 
-    displayStudents();
     document.getElementById("name").value = "";
     document.getElementById("gpa").value = "";
     document.getElementById("attendance").value = "";
@@ -84,38 +106,45 @@ function addStudent() {
 
 function deleteStudent(index) {
     students.splice(index, 1);
-    localStorage.setItem("students", JSON.stringify(students));
-    displayStudents();
+    saveData();
+    renderTable();
 }
 
-function displayStudents() {
+function renderTable() {
     let table = document.getElementById("studentTable");
     table.innerHTML = "";
 
     let highRiskCount = 0;
 
     students.forEach((student, index) => {
+
         if (student.risk === "High Risk") highRiskCount++;
 
         let color = student.risk === "High Risk" ? "danger" :
                     student.risk === "Moderate" ? "warning" : "success";
 
-        table.innerHTML += `
+        let row = `
             <tr>
                 <td>${student.name}</td>
                 <td>${student.gpa}</td>
                 <td>${student.attendance}%</td>
                 <td class="text-${color} fw-bold">${student.risk}</td>
-                <td><button class="btn btn-sm btn-danger" onclick="deleteStudent(${index})">Delete</button></td>
+                <td>
+                    <button class="btn btn-sm btn-danger" onclick="deleteStudent(${index})">
+                        Delete
+                    </button>
+                </td>
             </tr>
         `;
+
+        table.innerHTML += row;
     });
 
     document.getElementById("totalStudents").innerText = students.length;
     document.getElementById("highRisk").innerText = highRiskCount;
 }
 
-displayStudents();
+renderTable();
 
 </script>
 
