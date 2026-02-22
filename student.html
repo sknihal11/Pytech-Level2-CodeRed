@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Student Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Smart Student Record System</h2>
+
+    <!-- Dashboard -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>Total Students</h5>
+                    <h3 id="totalStudents">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5>High Risk Students</h5>
+                    <h3 id="highRisk">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="card p-3 mb-4">
+        <div class="row">
+            <div class="col"><input type="text" id="name" class="form-control" placeholder="Student Name"></div>
+            <div class="col"><input type="number" id="gpa" class="form-control" placeholder="GPA (0-10)"></div>
+            <div class="col"><input type="number" id="attendance" class="form-control" placeholder="Attendance %"></div>
+            <div class="col"><button onclick="addStudent()" class="btn btn-primary w-100">Add Student</button></div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>GPA</th>
+                <th>Attendance</th>
+                <th>Risk Level</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody id="studentTable"></tbody>
+    </table>
+</div>
+
+<script>
+
+let students = JSON.parse(localStorage.getItem("students")) || [];
+
+function calculateRisk(gpa, attendance) {
+    if (gpa < 6 || attendance < 65) return "High Risk";
+    if (gpa < 7) return "Moderate";
+    return "Safe";
+}
+
+function addStudent() {
+    let name = document.getElementById("name").value;
+    let gpa = parseFloat(document.getElementById("gpa").value);
+    let attendance = parseInt(document.getElementById("attendance").value);
+
+    if (!name || !gpa || !attendance) return alert("Fill all fields");
+
+    let risk = calculateRisk(gpa, attendance);
+
+    students.push({ name, gpa, attendance, risk });
+    localStorage.setItem("students", JSON.stringify(students));
+
+    displayStudents();
+    document.getElementById("name").value = "";
+    document.getElementById("gpa").value = "";
+    document.getElementById("attendance").value = "";
+}
+
+function deleteStudent(index) {
+    students.splice(index, 1);
+    localStorage.setItem("students", JSON.stringify(students));
+    displayStudents();
+}
+
+function displayStudents() {
+    let table = document.getElementById("studentTable");
+    table.innerHTML = "";
+
+    let highRiskCount = 0;
+
+    students.forEach((student, index) => {
+        if (student.risk === "High Risk") highRiskCount++;
+
+        let color = student.risk === "High Risk" ? "danger" :
+                    student.risk === "Moderate" ? "warning" : "success";
+
+        table.innerHTML += `
+            <tr>
+                <td>${student.name}</td>
+                <td>${student.gpa}</td>
+                <td>${student.attendance}%</td>
+                <td class="text-${color} fw-bold">${student.risk}</td>
+                <td><button class="btn btn-sm btn-danger" onclick="deleteStudent(${index})">Delete</button></td>
+            </tr>
+        `;
+    });
+
+    document.getElementById("totalStudents").innerText = students.length;
+    document.getElementById("highRisk").innerText = highRiskCount;
+}
+
+displayStudents();
+
+</script>
+
+</body>
+</html>
